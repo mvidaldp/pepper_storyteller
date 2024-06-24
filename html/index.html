@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<!--
+IMPORTANT!!!: This site is meant to work on Aldebaran's Pepper robot tablet. It
+uses Chrome 39 Web browser on Android Lollipop (5.1) with a screen resolution
+of 962 x 601 pixels (32 bit color depth).
+Web browser's user agent: Mozilla/5.0 (Linux; Android 5.1; LPT 200AR
+Build/LMY47I) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.71 Mobile
+Crosswalk/10.39.235.15 Safari/537.36
+JavaScript version: 1.7 - ECMAScript 5
+-->
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <!--Let browser know website is not scalable (no zoom in/out)-->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <!-- Mozilla's Fira Font -->
+  <link type=text/css" rel="stylesheet" href="css/fonts.css">
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <title>Industriekultur Expo 24</title>
+
+</head>
+
+<body>
+  <!--
+  Flash Of Unstyled Content (FOUC) fix: <script>0</script> at body's top and
+  domReady() trick.
+  Source:
+  https://primative.net/blog/how-to-get-rid-of-the-flash-of-unstyled-content
+  Warning message: "Layout was forced before the page was fully loaded. If
+  stylesheets are not yet loaded this may cause a flash of unstyled content."
+  -->
+  <script>0</script>
+  <main>
+    <i id="btn-close" class="fa-regular fa-circle-xmark">X</i>
+    <div id="banner" class="visible">
+      <img id="qr-code-left" src="img/qr-code.png"><img src="img/uni-logo.png" alt="Universität Osnabrück"><img id="qr-code-right" src="img/qr-code.png">
+    </div>
+    <div id="start-content" class="visible">
+      <img id="img-icon" src="img/lou_icon.png" alt="Lou icon">
+      <h1>
+        Ich bin schüchtern
+        <br>
+        Bitte drück auf
+      </h1>
+      <button id="btn-start-talk" class="btn btn-lg btn-primary btn-block" type="submit">START</button>
+    </div>
+    <img id="talking-image" src="img/uni-logo-talk.png" class="invisible">
+    <div id="talking-content" class="invisible">
+      <h3 id="current-phrase"></h3>
+    </div>
+  </main>
+  <script src="/libs/qi/2/qi.js"></script>
+  <script src="js/script.js"></script>
+</body>
+
+</html>
