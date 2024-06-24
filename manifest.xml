@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<package uuid="industriekultur_expo_24" version="1.0.0">
+ <names>
+  <name lang="de_DE">industriekultur_expo_24</name>
+  <name lang="en_US">industriekultur_expo_24</name>
+ </names>
+ <supportedLanguages>
+  <language>de_DE</language>
+  <language>en_US</language>
+ </supportedLanguages>
+ <descriptionLanguages>
+  <language>de_DE</language>
+  <language>en_US</language>
+ </descriptionLanguages>
+ <contents>
+  <behaviorContent path="webview">
+   <userRequestable/>
+   <nature>interactive</nature>
+   <names>
+    <name lang="de_DE">industriekultur_expo_24</name>
+    <name lang="en_US">industriekultur_expo_24</name>
+   </names>
+   <triggerSentences>
+    <sentence lang="de_DE">industriekultur</sentence>
+    <sentence lang="de_DE">lou, industriekultur</sentence>
+    <sentence lang="en_US">lindustry culture</sentence>
+    <sentence lang="en_US">lou, industry culture</sentence>
+   </triggerSentences>
+   <autonomous>
+    <condition purpose="launchTrigger"><![CDATA[1]]></condition>
+   </autonomous>
+   <permissions/>
+  </behaviorContent>
+ </contents>
+</package>
