@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8" ?><ChoregrapheProject xmlns="http://www.aldebaran-robotics.com/schema/choregraphe/project.xsd" xar_version="3"><Box name="root" id="-1" localization="8" tooltip="Root box of Choregraphe&apos;s behavior. Highest level possible." x="0" y="0"><bitmap>media/images/box/root.png</bitmap><script language="4"><content><![CDATA[]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" /><Timeline enable="0"><BehaviorLayer name="behavior_layer1"><BehaviorKeyframe name="keyframe1" index="1"><Diagram><Box name="Show App" id="2" localization="8" tooltip="Loads the application on the tablet, if it exists, and displays the webview.&#x0A;&#x0A;V1.0.0&#x0A;" x="306" y="97"><bitmap>media/images/box/root.png</bitmap><script language="4"><content><![CDATA[import urllib
+import urllib2
+import os
+import json
+
+class MyClass(GeneratedClass):
+
+    def __init__(self):
+        GeneratedClass.__init__(self)
+
+    def onLoad(self):
+        self.isRunning = False
+
+    def _read_urls_from_json(self, json_file_path):
+        try:
+            with open(json_file_path, 'r') as file:
+                data = json.load(file)
+                return data['URL'], data['URL_ALT'], data['URL_ATT_CALLS'], data['URL_NTFY']
+        except Exception as e:
+            self.logger.error('Error reading JSON file: ' + str(e))
+            return None, None, None, None
+
+    def _download_csv(self):
+        # Get the current working directory
+        # current_directory = os.getcwd()  # output: /run/user/1001/naoqi
+        current_directory = '/data/home/nao/.local/share/PackageManager/apps/industriekultur_expo_24/'
+        # Display the current working directory
+        self.logger.info("Current working directory: " + current_directory)
+        
+        json_file_path = os.path.join(current_directory, 'urls.json')
+        URL, URL_ALT, URL_ATT_CALLS, URL_NTFY = self._read_urls_from_json(json_file_path)
+
+        if not URL or not URL_ALT or not URL_ATT_CALLS or not URL_NTFY:
+            self.logger.error('URLs could not be read from the JSON file.')
+            return None
+
+        try:
+            # Open the URL and read the content and its alternative
+            response = urllib.urlopen(URL)
+            csv_content = response.read()
+            response_alt = urllib.urlopen(URL_ALT)
+            csv_content_alt = response_alt.read()
+            attention_calls = urllib.urlopen(URL_ATT_CALLS)
+            csv_content_att_calls = attention_calls.read()
+
+            # Save the content to a local file
+            with open(current_directory + 'lou_talk.csv', 'wb') as csv_file:
+                csv_file.write(csv_content)
+            with open(current_directory + 'lou_talk_alt.csv', 'wb') as csv_file:
+                csv_file.write(csv_content_alt)
+            with open(current_directory + 'lou_attention_calls.csv', 'wb') as csv_file:
+                csv_file.write(csv_content_att_calls)
+
+            self.logger.info('CSV files downloaded successfully.')
+
+            return csv_content, csv_content_alt, csv_content_att_calls
+        except Exception as e:
+            self.logger.error('Error downloading CSV file:' + str(e))
+            # Attempt to load the CSV file locally
+            try:
+                with open(current_directory + 'lou_talk.csv', 'rb') as local_csv_file:
+                    csv_content = local_csv_file.read()
+                with open(current_directory + 'lou_talk_alt.csv', 'rb') as local_csv_file:
+                    csv_content_alt = local_csv_file.read()
+                with open(current_directory + 'lou_attention_calls.csv', 'rb') as local_csv_file:
+                    csv_content_att_calls = local_csv_file.read()
+                self.logger.info('Loaded CSV files locally.')
+                return csv_content, csv_content_alt, csv_content_att_calls
+            except Exception as e:
+                self.logger.error('Error loading CSV file locally:' + str(e))
+                return None
+
+    def _insertData(self, talk_data, talk_data_alt, attcalls_data):
+        memory = ALProxy("ALMemory")
+        memory.insertData("packageUid", "industriekultur_expo_24")
+        memory.insertData("behaviorUid", "webview")
+        memory.insertData("talkData", talk_data)
+        memory.insertData("talkData_alt", talk_data_alt)
+        memory.insertData("attcallsData", attcalls_data)
+        packageUid = memory.getData("packageUid")
+        return packageUid
+
+    def _getTabletService(self):
+        tabletService = None
+        try:
+            tabletService = self.session().service("ALTabletService")
+        except Exception as e:
+            self.logger.error(e)
+        return tabletService
+
+    def _get_public_ip(self):
+        try:
+            # Request the public IP address from ident.me
+            response = urllib.urlopen('https://ident.me')
+            public_ip = response.read()
+            return public_ip
+        except Exception as e:
+            self.logger.error('Error trying to get the public IP: ' + str(e))
+            return 'Error trying to get the public IP'
+
+    def _notify(self):
+        # Get the system uptime using uptime -p
+        uptime_output = os.popen('uptime -p').read().strip()
+        uptime = uptime_output.strip()
+        uptime = uptime.replace('up ', '')
+        try:
+            # Get the local IP address using hostname -i
+            ip_output = os.popen('hostname -i').read().strip()
+            local_ip = ip_output.strip().split()[0]  # Extracting the first IP address if multiple are returned
+            public_ip = self._get_public_ip()
+        except Exception as e:
+            self.logger.error('Error trying to get the local IP: ' + str(e))
+            local_ip = 'Error trying to get the local IP'
+
+        # Message to be sent
+        message = u'\U0001F916 Lou is up and the App started \U0001F600\nUptime: {}\nLocal IP: {}\nPublic IP: {}'.format(uptime, local_ip, public_ip)
+        message = message.encode('utf-8')
+
+        # Send message
+        req = urllib2.Request(URL_NTFY, message)
+        response = urllib2.urlopen(req)
+
+    def onInput_onStart(self):
+        talk_data, talk_data_alt, attcalls_data = self._download_csv()
+        if self.isRunning:
+            return # already running, nothing to do
+        self.isRunning = True
+        # We create TabletService here in order to avoid
+        # problems with connections and disconnections of the tablet during the life of the application
+        tabletService = self._getTabletService()
+        appName = self.packageUid()
+        state = False
+        if appName:
+            if tabletService:
+                if tabletService.loadApplication(appName):
+                    self.logger.info("Successfully set application: %s" % appName)
+                    packageUid = self._insertData(talk_data, talk_data_alt, attcalls_data)
+                    tabletService.showWebview()
+                    state = True
+                else:
+                    self.logger.warning("Got tablet service, but failed to set application: %s" % appName)
+            else:
+                self.logger.warning("Couldn't find tablet service, so can't set application: %s" % appName)
+        if state:
+            self._notify()
+            self.onSuccess()
+        else:
+            self.onFailure()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" /><Output name="onSuccess" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished successfully." id="3" /><Output name="onFailure" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished unsuccessfully." id="4" /></Box><Link inputowner="2" indexofinput="2" outputowner="0" indexofoutput="2" /></Diagram></BehaviorKeyframe></BehaviorLayer></Timeline></Box></ChoregrapheProject>
